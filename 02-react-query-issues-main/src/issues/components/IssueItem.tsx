@@ -2,20 +2,29 @@ import { useNavigate } from "react-router-dom";
 import { FiInfo, FiMessageSquare, FiCheckCircle } from "react-icons/fi";
 import { Issue, State } from "../interfaces";
 import { FC } from "react";
+import { useQueryClient } from 'react-query';
+import { getIssueInfo } from "../hooks/useIssue";
 interface Props {
   issue: Issue;
 }
 
 export const IssueItem: FC<Props> = ({ issue }) => {
-
-
   const navigate = useNavigate();
 
+  const queryClient = useQueryClient()
 
+  const onMouseEnter = () => {
+    queryClient.prefetchQuery(
+      ['issue', issue.number],
+      () => getIssueInfo(issue.number)
+    )
+  };
 
   return (
-    <div className="card mb-2 issue"
-    onClick={ ()=> navigate(`/issues/issue/${issue.number}`)}
+    <div
+      className="card mb-2 issue"
+      onClick={() => navigate(`/issues/issue/${issue.number}`)}
+      onMouseEnter={onMouseEnter}
     >
       <div className="card-body d-flex align-items-center">
         {issue.state === State.Open ? (
@@ -38,7 +47,7 @@ export const IssueItem: FC<Props> = ({ issue }) => {
             alt="User Avatar"
             className="avatar"
           />
-          <span className="px-2">{ issue.comments}</span>
+          <span className="px-2">{issue.comments}</span>
           <FiMessageSquare />
         </div>
       </div>
