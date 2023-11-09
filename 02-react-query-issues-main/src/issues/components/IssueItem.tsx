@@ -2,8 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { FiInfo, FiMessageSquare, FiCheckCircle } from "react-icons/fi";
 import { Issue, State } from "../interfaces";
 import { FC } from "react";
-import { useQueryClient } from 'react-query';
-import { getIssueInfo } from "../hooks/useIssue";
+import { useQueryClient } from "react-query";
+import { getIssueComments, getIssueInfo } from "../hooks/useIssue";
 interface Props {
   issue: Issue;
 }
@@ -11,20 +11,35 @@ interface Props {
 export const IssueItem: FC<Props> = ({ issue }) => {
   const navigate = useNavigate();
 
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
-  const onMouseEnter = () => {
-    queryClient.prefetchQuery(
-      ['issue', issue.number],
-      () => getIssueInfo(issue.number)
-    )
+  const prefetchData = () => {
+    queryClient.prefetchQuery(["issue", issue.number], () =>
+      getIssueInfo(issue.number)
+    );
+
+    queryClient.prefetchQuery(["issue", issue.number, "comments"], () =>
+      getIssueComments(issue.number)
+    );
+  };
+
+  const preSetData = () => {
+    queryClient.setQueryData(
+      ["issue", issue.number],
+      issue, // con setQueryData se está precargando en caché el issue desde el caché, no se está hacinedo fetch o petición a la api, en este caso carga sólo la primera antes de entrar al issue, el resto se carga al entrar
+      {
+        updatedAt: new Date().getTime() + 100000 //hora actual + 1 minuto de este moddo le decimos que durante 1 minuto, hasta la hora o fecha que le hemos indicado, se considera fresca esa data, aunque entre en el issue, no se hará el fetch hasta que la fecha pase. Esto se usa aqui porque sabemos que en un minutos la data no se va actualizar en este caso
+      }
+
+    );
   };
 
   return (
     <div
       className="card mb-2 issue"
       onClick={() => navigate(`/issues/issue/${issue.number}`)}
-      onMouseEnter={onMouseEnter}
+      // onMouseEnter={prefetchData}
+      onMouseEnter={preSetData}
     >
       <div className="card-body d-flex align-items-center">
         {issue.state === State.Open ? (
