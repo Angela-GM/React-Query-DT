@@ -10,7 +10,7 @@ export const ListView = () => {
 
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [state, setState] = useState<State>();
-  const { issuesQuery } = useIssues()
+  const { issuesQuery } = useIssues({state, labels: selectedLabels})
 
 
 
