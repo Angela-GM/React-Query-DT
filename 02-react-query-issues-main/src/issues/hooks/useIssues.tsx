@@ -2,7 +2,7 @@ import { useQuery } from "react-query";
 import { githubApi } from "../../api/githubApi";
 import { Issue, State } from "../interfaces";
 import { sleep } from "../../helpers/sleep";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 
 interface Props {
   state?: State;
@@ -33,20 +33,38 @@ const getIssues = async ( { labels, state, page = 1 }: Props ): Promise<Issue[]>
 
 export const useIssues = ({ state, labels }: Props) => {
 
-  const [ page, setPage ] = useState(1);
+  const [ page, setPage ] = useState(1);//cuando el setPage cambia se recarcará automaticamente el useQuery (issuesQuery) nueva petición a la api
+
+  useEffect(() => {
+    setPage(1)
+  }, [state, labels]) //esto se ejectua si cualquiera de las variables state o labels cambia
+  
 
   const issuesQuery = useQuery(
     ["issues", { state, labels, page } ],
     () => getIssues({ labels, state, page } )
     );
 
+    const nextPage = () => {
+      if (issuesQuery.data?.length === 0) return;
+
+      setPage(page + 1)
+    }
+
+    const prevPage = () => {
+      if (page > 1 ) setPage(page - 1)
+    }
+
   return {
     // Properties
     issuesQuery,
 
     // Getter (algo que tiene una función propia)
-    page,
+    page: issuesQuery.isFetching ? 'Loading' : page,
 
     // Methods
+    nextPage,
+    prevPage,
+
   };
 };
